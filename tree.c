@@ -76,8 +76,15 @@ int main(int argc, char *argv[]) {
 	
 	if(argc == 1) {
 		char cwd[4096];
-		printf("%s\n",getcwd(cwd, sizeof(cwd)));	
-		listdir(getcwd(cwd, sizeof(cwd)), 0);
+		getcwd(cwd, sizeof(cwd));
+		unsigned int cwdn = strlen(cwd);
+		if(cwd[cwdn-1]!='/') {
+			cwd[cwdn] = '/';
+			cwd[cwdn+1] = '\0';
+		}
+
+		printf("%s\n",cwd);	
+		listdir(cwd, 0);
 		
 		printf("\n%d directories, %d files\n", nd, nf-nd);
 		return 0;
