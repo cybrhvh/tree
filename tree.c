@@ -16,10 +16,12 @@ int listdir(const char *path, unsigned int walk) {
 	DIR *dptr = opendir(path);
 	DIR *dptr1 = opendir(path);
 
-	if(dptr == NULL && dptr == NULL) {
-		printf("\nERROR: %s\n", strerror(errno));
+	if((dptr == NULL || dptr1 == NULL) && walk < 1) {
+		printf("[ERROR: %s]\n", strerror(errno));
 		return -1;
-	}
+	} 	
+	else if (dptr == NULL || dptr1 == NULL) 
+		return -1;
 	
 	unsigned int counter = 0;
 	while(dentry1 = readdir(dptr1)) {
@@ -40,31 +42,57 @@ int listdir(const char *path, unsigned int walk) {
 
 			index==counter?printf("└── "):printf("├── ");
 			
-			printf("%s\n",dentry->d_name);
+			if(dentry->d_type != 4 && dentry->d_type != 10)
+				printf("%s\n",dentry->d_name);
 			
-			if(dentry->d_type == 4) {
-				nd++;	
+			if(dentry->d_type == 10) {
 				
 				char *cpath = malloc((strlen(path)+1) + 1 + strlen(dentry->d_name));
 				strcpy(cpath, path);
 			
 				char *wpath = strcat(cpath, dentry->d_name);
-				wpath = strcat(wpath, "/");
+				//wpath = strcat(wpath, "/");
+
+				printf("%s",dentry->d_name);
 				
+				char sym[1024];
+				if((readlink(wpath, sym, sizeof(sym)-1)) == -1) {
+					printf("\t[ERROR: %s]\n", strerror(errno));
+					return -1;
+				}
+				
+				printf("  -->  %s\n", sym);
+			}
+
+			
+			if(dentry->d_type == 4) {
+				nd++;
+				printf("%s\n",dentry->d_name);
+
+				char *cpath = malloc((strlen(path)+1) + 1 + strlen(dentry->d_name));
+				strcpy(cpath, path);
+			
+				char *wpath = strcat(cpath, dentry->d_name);
+				wpath = strcat(wpath, "/");
+					
 				walk++;
 				if(index == counter)
 					walkp[walk] = 1;
-				
-				listdir(wpath, walk);
-				
+
+				if(listdir(wpath, walk) == -1 && walk >= 1){
+					printf("\033[A\033[%zuC",(walk * 4 + strlen(dentry->d_name)));
+					printf("\t[ERROR: %s]\n", strerror(errno));
+				}
+
 				if(index==counter)
 					walkp[walk] = 0;
 				walk--;
-				
+					
 				free(cpath);
-			}	
+			} 
+					
+		}	
 			
-		}
 	}
 	closedir(dptr);
 	
